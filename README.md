@@ -22,10 +22,7 @@ No dependencies beyond the standard library and `requests`.
 
 ## Requirements
 
-| | |
-|---|---|
-| Python | 3.11 + |
-| [requests](https://pypi.org/project/requests/) | any recent version |
+T.B.D.
 
 ---
 
