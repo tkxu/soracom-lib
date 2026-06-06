@@ -97,7 +97,7 @@ auth_info = sf.read_auth_keys()
 token = sf.authenticate(auth_info)
 
 # List all files under a path
-files = sf.list_files_iterative("logs/44010XXXXXXXXXXX/", token)
+files = sf.list_files_iterative("logs/XXXXX0XXXXXXXXXXX/", token)
 print(files)
 
 # Download each file individually
@@ -108,8 +108,8 @@ for remote_path in files:
 
 # Upload a file
 sf.upload_file_to_soracom(
-    file_path="./results/output.pos",
-    upload_path="logs/44010XXXXXXXXXXX/pos/output.pos",
+    file_path="./results/output.log",
+    upload_path="logs/XXXXXXXXXXXXXXXX/output.log",
     token=token,
 )
 ```
@@ -162,7 +162,7 @@ Iteratively traverse directories and list all files under `base_path` in Harvest
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `base_path` | `str` | Root path in Harvest Files, e.g. `"logs/44010.../"` |
+| `base_path` | `str` | Root path in Harvest Files, e.g. `"logs/XXXXX.../"` |
 | `token` | `dict` | Token dict from `authenticate()` |
 | `limit` | `int \| None` | Cap on total results; `None` = no limit |
 | `page_size` | `int` | Number of entries per API request (default `100`, max `100`) |
@@ -179,7 +179,7 @@ Download a single file from Harvest Files and save it to the local filesystem.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `remote_path` | `str` | File path in Harvest Files (e.g. `"logs/44010.../file.ubx"`) |
+| `remote_path` | `str` | File path in Harvest Files (e.g. `"logs/XXXXX.../file.log"`) |
 | `local_path` | `str` | Destination path on local filesystem |
 | `token` | `dict` | Token dict from `authenticate()` |
 | `overwrite` | `bool` | If `False` (default) and the local file already exists, the download is skipped and `True` is returned |
@@ -251,8 +251,8 @@ import soracom_harvest_files as sf
 auth_info = sf.read_auth_keys()
 token = sf.authenticate(auth_info)
 
-files = sf.list_files_iterative("logs/44010XXXXXXXXXXX/", token)
-save_dir = "./download/44010XXXXXXXXXXX"
+files = sf.list_files_iterative("logs/XXXXXXXXXXXXXXXX/", token)
+save_dir = "./download/XXXXXXXXXXXXXXXX"
 os.makedirs(save_dir, exist_ok=True)
 
 LIMIT_BYTES = 200 * 1024 * 1024  # 200 MB
