@@ -34,4 +34,3 @@ __all__ = [
     "is_recent",
 ]
 
-__version__ = "0.1.1"
