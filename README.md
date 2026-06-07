@@ -94,7 +94,7 @@ auth_info = sf.read_auth_keys()
 token = sf.authenticate(auth_info)
 
 # List all files under a path
-files = sf.list_files_iterative("logs/XXXXX0XXXXXXXXXXX/", token)
+files = sf.list_files_iterative("logs/XXXXXXXXXXXXXXXXX/", token)
 print(files)
 
 # Download each file individually
