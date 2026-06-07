@@ -1,7 +1,13 @@
 from .soracom_harvest_files import (
     API_BASE,
+    NETRC_HOST,
+    NETRC_PATHS,
+    LEVEL_INFO,
+    LEVEL_WARN,
+    LEVEL_ERROR,
     AuthInfo,
     authenticate,
+    read_auth_keys,
     list_files_iterative,
     download_and_save,
     upload_file_to_soracom,
@@ -12,7 +18,13 @@ from .soracom_harvest_files import (
 
 __all__ = [
     "API_BASE",
+    "NETRC_HOST",
+    "NETRC_PATHS",
+    "LEVEL_INFO",
+    "LEVEL_WARN",
+    "LEVEL_ERROR",
     "AuthInfo",
+    "read_auth_keys",
     "authenticate",
     "list_files_iterative",
     "download_and_save",
@@ -22,4 +34,4 @@ __all__ = [
     "is_recent",
 ]
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
