@@ -45,6 +45,10 @@ Desktop.ini
 *.key
 *.pem
 .netrc
+_netrc
+.pypirc
+*Key*.txt
+*KEY*.txt
 
 # =========================
 # Binary / artifacts
