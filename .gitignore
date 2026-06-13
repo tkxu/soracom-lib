@@ -49,6 +49,7 @@ _netrc
 .pypirc
 *Key*.txt
 *KEY*.txt
+*config*.py
 
 # =========================
 # Binary / artifacts

@@ -65,7 +65,7 @@ __all__ = [
 # Constants
 # ---------------------------------------------
 
-API_BASE = "https://g.api.soracom.io/v1"
+API_BASE = "https://api.soracom.io/v1"
 NETRC_HOST = "api.soracom.io"
 NETRC_PATHS = (
     os.path.expanduser("~/.netrc"),
