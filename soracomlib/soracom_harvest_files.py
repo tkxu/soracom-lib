@@ -69,7 +69,6 @@ API_BASE = "https://g.api.soracom.io/v1"
 NETRC_HOST = "api.soracom.io"
 NETRC_PATHS = (
     os.path.expanduser("~/.netrc"),
-    os.path.expanduser("~/_netrc"),
 )
 
 LEVEL_INFO = "INFO"

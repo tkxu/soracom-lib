@@ -54,7 +54,7 @@ Generate an **Auth Key** in the [SORACOM User Console](https://console.soracom.i
 
 ### 2. Write the netrc file
 
-**Windows** — create `%USERPROFILE%\_netrc`:
+**Windows** — create `%USERPROFILE%\.netrc`:
 
 ```
 machine api.soracom.io
@@ -117,7 +117,7 @@ sf.upload_file_to_soracom(
 
 ### `read_auth_keys(base_dir=None) -> AuthInfo`
 
-Load credentials from `_netrc` or `.netrc` and return an `AuthInfo` object.
+Load credentials from `.netrc` and return an `AuthInfo` object.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
