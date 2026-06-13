@@ -12,7 +12,7 @@ No dependencies beyond the standard library and `requests`.
 ## Features
 
 - Credential loading from `.netrc` (no credentials in source code)
-- Authentication via SORACOM SAM user — wraps API key + token into a reusable dict
+- Authentication via SORACOM SAM user — calls `POST /auth` and returns a reusable token dict
 - Iterative directory traversal with optional time-range filter and pagination
 - Per-file download with skip-existing and overwrite options
 - File upload with automatic `Content-Type` detection
@@ -22,7 +22,10 @@ No dependencies beyond the standard library and `requests`.
 
 ## Requirements
 
-T.B.D.
+| | |
+|---|---|
+| Python | 3.11 + |
+| [requests](https://pypi.org/project/requests/) | any recent version |
 
 ---
 
@@ -76,7 +79,6 @@ chmod 600 ~/.netrc
 ### 3. Add netrc to .gitignore
 
 ```
-_netrc
 .netrc
 ```
 
@@ -142,14 +144,14 @@ class AuthInfo:
 
 ### `authenticate(auth: AuthInfo) -> dict`
 
-Wrap `AuthInfo` into a token dict that is passed to every subsequent API call.
+Call `POST /auth` with the credentials in `auth` and return the session token dict issued by the server.
 
 ```python
 token = sf.authenticate(auth_info)
 # → {"apiKey": "...", "token": "..."}
 ```
 
-No network call is made.
+Raises `RuntimeError` if the request fails or the server returns a non-200 status.
 
 ---
 

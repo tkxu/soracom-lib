@@ -22,6 +22,7 @@ limitations under the License.
 History:
     Rev. 0.80  2025-03-23
     Rev. 0.90  2026-06-06
+    Rev. 0.91  2026-06-14    
 """
 
 from __future__ import annotations
@@ -144,16 +145,34 @@ def read_auth_keys(base_dir: str | None = None) -> AuthInfo:
 
 def authenticate(auth: AuthInfo) -> dict:
     """
-    Build an authentication token dict from AuthInfo.
+    Authenticate with SORACOM API and return a session token dict.
 
-    For Harvest Files, the API key and token are usually passed directly
-    as headers, so this function simply wraps them in a dict.
+    Calls POST /auth with the authKeyId and authKey from AuthInfo,
+    and returns the token dict ({"apiKey": ..., "token": ...}) issued
+    by the server.
+
+    Raises:
+        RuntimeError: If authentication fails.
     """
-    token = {
-        "apiKey": auth.api_key,
-        "token": auth.api_token,
-    }
-    log_status("Authentication info prepared", LEVEL_INFO)
+    url = f"{API_BASE}/auth"
+    try:
+        res = requests.post(
+            url,
+            json={
+                "authKeyId": auth.api_key,
+                "authKey":   auth.api_token,
+            },
+        )
+    except requests.exceptions.RequestException as exc:
+        raise RuntimeError(f"Authentication request failed: {exc}") from exc
+
+    if res.status_code != 200:
+        raise RuntimeError(
+            f"Authentication failed: {res.status_code} {res.text[:200]}"
+        )
+
+    token = res.json()
+    log_status("Authentication successful", LEVEL_INFO)
     return token
 
 
