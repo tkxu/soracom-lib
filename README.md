@@ -11,7 +11,7 @@ No dependencies beyond the standard library and `requests`.
 
 ## Features
 
-- Credential loading from `_netrc` / `.netrc` (no credentials in source code)
+- Credential loading from `.netrc` (no credentials in source code)
 - Authentication via SORACOM SAM user — wraps API key + token into a reusable dict
 - Iterative directory traversal with optional time-range filter and pagination
 - Per-file download with skip-existing and overwrite options
