@@ -6,6 +6,7 @@ from .soracom_harvest_files import (
     LEVEL_WARN,
     LEVEL_ERROR,
     AuthInfo,
+    FileEntry,
     authenticate,
     read_auth_keys,
     list_files_iterative,
@@ -14,6 +15,7 @@ from .soracom_harvest_files import (
     get_with_auth,
     delete_with_auth,
     is_recent,
+    resolve_entry_timestamp,
 )
 
 __all__ = [
@@ -24,6 +26,7 @@ __all__ = [
     "LEVEL_WARN",
     "LEVEL_ERROR",
     "AuthInfo",
+    "FileEntry",
     "read_auth_keys",
     "authenticate",
     "list_files_iterative",
@@ -32,5 +35,6 @@ __all__ = [
     "get_with_auth",
     "delete_with_auth",
     "is_recent",
+    "resolve_entry_timestamp",
 ]
 

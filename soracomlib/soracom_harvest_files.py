@@ -22,7 +22,7 @@ limitations under the License.
 History:
     Rev. 0.80  2025-03-23
     Rev. 0.90  2026-06-06
-    Rev. 0.91  2026-06-14    
+    Rev. 0.91  2026-06-14  Add FileEntry, resolve_entry_timestamp
 """
 
 from __future__ import annotations
@@ -32,6 +32,7 @@ import logging
 import mimetypes
 import netrc
 import os
+import re
 import shutil
 import tempfile
 import urllib.parse
@@ -51,6 +52,7 @@ __all__ = [
     "LEVEL_ERROR",
     # Data classes
     "AuthInfo",
+    "FileEntry",
     # Core helpers
     "read_auth_keys",
     "authenticate",
@@ -60,6 +62,8 @@ __all__ = [
     "download_and_save",
     "upload_file_to_soracom",
     "is_recent",
+    # Timestamp helpers
+    "resolve_entry_timestamp",
 ]
 
 # ---------------------------------------------
@@ -104,6 +108,21 @@ class AuthInfo:
 
     api_key: str
     api_token: str
+
+
+@dataclass(frozen=True)
+class FileEntry:
+    """
+    A single file entry returned by list_files_iterative().
+
+    Attributes:
+        path:          Full remote path in Harvest Files
+        last_modified: UTC-aware datetime from the API's lastModifiedTime field,
+                       or None when the API omits it.
+    """
+
+    path: str
+    last_modified: datetime | None
 
 
 # ---------------------------------------------
@@ -245,7 +264,7 @@ def list_files_iterative(
     page_size: int = 100,
     start_time: datetime | None = None,
     end_time: datetime | None = None,
-) -> list[str]:
+) -> list[FileEntry]:
     """
     List files under base_path using an iterative (non-recursive) traversal.
 
@@ -258,9 +277,10 @@ def list_files_iterative(
         end_time: Only include files modified at or before this time.
 
     Returns:
-        List of file paths (strings).
+        List of FileEntry objects, each holding the remote path and the
+        UTC-aware lastModifiedTime (or None when absent from the API response).
     """
-    results: list[str] = []
+    results: list[FileEntry] = []
     stack: list[tuple[str, str | None]] = [(base_path, None)]
 
     start_time = _normalize_dt(start_time)
@@ -299,16 +319,22 @@ def list_files_iterative(
                 stack.append((sub_path, None))
                 continue
 
-            # Time filter
+            # Convert lastModifiedTime (ms epoch) to UTC datetime
+            last_modified: datetime | None = None
             if last_modified_ms is not None:
-                ts = datetime.fromtimestamp(last_modified_ms / 1000, tz=timezone.utc)
-                if start_time and ts < start_time:
+                last_modified = datetime.fromtimestamp(
+                    last_modified_ms / 1000, tz=timezone.utc
+                )
+
+            # Time filter
+            if last_modified is not None:
+                if start_time and last_modified < start_time:
                     continue
-                if end_time and ts > end_time:
+                if end_time and last_modified > end_time:
                     continue
 
             full_path = path.rstrip("/") + "/" + filename
-            results.append(full_path)
+            results.append(FileEntry(path=full_path, last_modified=last_modified))
 
             if limit is not None and len(results) >= limit:
                 return results[:limit]
@@ -427,6 +453,35 @@ def upload_file_to_soracom(
     except OSError as exc:
         log_status(f"Upload failed (cannot read file): {file_path} -> {exc}", LEVEL_ERROR)
         return False
+
+
+# ---------------------------------------------
+# Timestamp helpers
+# ---------------------------------------------
+
+def resolve_entry_timestamp(
+    entry: FileEntry,
+    tz: timezone = timezone.utc,
+) -> datetime | None:
+    """
+    Resolve the best available timestamp for a FileEntry.
+
+    Resolution order:
+    1. :func:`parse_filename_timestamp` applied to the entry's basename.
+    2. ``entry.last_modified`` from the Harvest Files API (fallback).
+
+    Args:
+        entry: A :class:`FileEntry` returned by :func:`list_files_iterative`.
+        tz:    Timezone for the returned datetime (default: UTC).
+
+    Returns:
+        Timezone-aware datetime, or None if neither source yields a timestamp.
+    """
+
+    if entry.last_modified is not None:
+        return entry.last_modified.astimezone(tz)
+
+    return None
 
 
 # ---------------------------------------------

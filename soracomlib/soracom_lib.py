@@ -2,15 +2,6 @@
 """
 soracom-lib — top-level wrapper package.
 
-This module re-exports everything from :mod:`soracom_harvest_files` so that
-users can write::
-
-    import soracom_lib as sl
-
-and access all Harvest Files helpers via ``sl.*``, matching the PyPI package
-name ``soracom-lib``.
-
-Future SORACOM API modules can also be re-exported from here.
 
 Copyright (c) 2025-2026 tkxu
 
@@ -29,6 +20,7 @@ limitations under the License.
 History:
     Rev. 0.80  2025-03-23
     Rev. 0.90  2026-06-06
+    Rev. 0.91  2026-06-14  Add FileEntry, resolve_entry_timestamp
 """
 
 from __future__ import annotations
@@ -41,6 +33,7 @@ from soracom_harvest_files import (
     LEVEL_WARN,
     LEVEL_ERROR,
     AuthInfo,
+    FileEntry,
     read_auth_keys,
     authenticate,
     get_with_auth,
@@ -49,6 +42,7 @@ from soracom_harvest_files import (
     download_and_save,
     upload_file_to_soracom,
     is_recent,
+    resolve_entry_timestamp,
 )
 
 __all__ = [
@@ -59,6 +53,7 @@ __all__ = [
     "LEVEL_WARN",
     "LEVEL_ERROR",
     "AuthInfo",
+    "FileEntry",
     "read_auth_keys",
     "authenticate",
     "get_with_auth",
@@ -67,4 +62,5 @@ __all__ = [
     "download_and_save",
     "upload_file_to_soracom",
     "is_recent",
+    "resolve_entry_timestamp",
 ]

@@ -92,18 +92,18 @@ import soracom_harvest_files as sf
 # Load credentials (returns AuthInfo; raises RuntimeError on failure)
 auth_info = sf.read_auth_keys()
 
-# Build token dict from credentials
+# Call POST /auth and get a session token dict
 token = sf.authenticate(auth_info)
 
-# List all files under a path
+# List all files under a path (returns list[FileEntry])
 files = sf.list_files_iterative("logs/XXXXXXXXXXXXXXXXX/", token)
-print(files)
+print([e.path for e in files])
 
 # Download each file individually
 import os
-for remote_path in files:
-    local_path = os.path.join("./download", os.path.basename(remote_path))
-    sf.download_and_save(remote_path, local_path, token)
+for entry in files:
+    local_path = os.path.join("./download", os.path.basename(entry.path))
+    sf.download_and_save(entry.path, local_path, token)
 
 # Upload a file
 sf.upload_file_to_soracom(
@@ -155,7 +155,7 @@ Raises `RuntimeError` if the request fails or the server returns a non-200 statu
 
 ---
 
-### `list_files_iterative(base_path, token, *, limit=None, page_size=100, start_time=None, end_time=None) -> list[str]`
+### `list_files_iterative(base_path, token, *, limit=None, page_size=100, start_time=None, end_time=None) -> list[FileEntry]`
 
 Iteratively traverse directories and list all files under `base_path` in Harvest Files.
 
@@ -168,7 +168,7 @@ Iteratively traverse directories and list all files under `base_path` in Harvest
 | `start_time` | `datetime \| None` | Exclude files modified before this time. Naive datetimes are treated as UTC. |
 | `end_time` | `datetime \| None` | Exclude files modified after this time. Naive datetimes are treated as UTC. |
 
-Returns a list of full file path strings.
+Returns a list of `FileEntry` objects. Each entry has a `path` attribute (full remote path string) and a `last_modified` attribute (UTC-aware `datetime`, or `None` when absent from the API response).
 
 ---
 
@@ -257,17 +257,17 @@ os.makedirs(save_dir, exist_ok=True)
 LIMIT_BYTES = 200 * 1024 * 1024  # 200 MB
 downloaded_bytes = 0
 
-for remote_path in sorted(files):
+for entry in sorted(files, key=lambda e: e.path):
     if downloaded_bytes >= LIMIT_BYTES:
         break
 
-    local_path = os.path.join(save_dir, os.path.basename(remote_path))
-    ok = sf.download_and_save(remote_path, local_path, token)
+    local_path = os.path.join(save_dir, os.path.basename(entry.path))
+    ok = sf.download_and_save(entry.path, local_path, token)
 
     if ok:
         downloaded_bytes += os.path.getsize(local_path)
         # Optionally delete from Harvest Files after download:
-        # sf.delete_with_auth(f"{sf.API_BASE}/files/private/{remote_path}", token)
+        # sf.delete_with_auth(f"{sf.API_BASE}/files/private/{entry.path}", token)
 ```
 
 ---
