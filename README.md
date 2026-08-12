@@ -1,9 +1,9 @@
-# soracom_lib
+# soracom-lib
 
 A lightweight Python client library for [SORACOM Harvest Files](https://developers.soracom.io/en/docs/harvest/).
 
 Provides authentication, iterative file listing, download, upload, and related helpers.  
-All functionality lives in `soracom_harvest_files.py`.
+Core implementation lives in `soracomlib/soracom_harvest_files.py`; the top-level `soracomlib` package re-exports everything, so you only need `import soracomlib`.
 
 No dependencies beyond the standard library and `requests`.
 
@@ -24,31 +24,24 @@ No dependencies beyond the standard library and `requests`.
 
 | | |
 |---|---|
-| Python | 3.11 + |
-| [requests](https://pypi.org/project/requests/) | any recent version |
+| Python | 3.8 + |
+| [requests](https://pypi.org/project/requests/) | >= 2.28 |
 
 ---
 
 ## Installation
 
-No package installation is needed. Copy the file into your project:
-
-```
-your_project/
-└── soracom_harvest_files.py
-```
-
-Install the only external dependency:
+Install from PyPI:
 
 ```bash
-pip install requests
+pip install soracom-lib
 ```
 
 ---
 
 ## Credentials setup
 
-`soracom_harvest_files` never reads credentials from source code or environment variables.  
+`soracomlib` never reads credentials from source code or environment variables.  
 It uses the standard `netrc` mechanism so secrets stay out of your repository.
 
 ### 1. Create a SORACOM SAM user
@@ -87,26 +80,26 @@ chmod 600 ~/.netrc
 ## Quick start
 
 ```python
-import soracom_harvest_files as sf
+import soracomlib as sl
 
 # Load credentials (returns AuthInfo; raises RuntimeError on failure)
-auth_info = sf.read_auth_keys()
+auth_info = sl.read_auth_keys()
 
 # Call POST /auth and get a session token dict
-token = sf.authenticate(auth_info)
+token = sl.authenticate(auth_info)
 
 # List all files under a path (returns list[FileEntry])
-files = sf.list_files_iterative("logs/XXXXXXXXXXXXXXXXX/", token)
+files = sl.list_files_iterative("logs/XXXXXXXXXXXXXXXXX/", token)
 print([e.path for e in files])
 
 # Download each file individually
 import os
 for entry in files:
     local_path = os.path.join("./download", os.path.basename(entry.path))
-    sf.download_and_save(entry.path, local_path, token)
+    sl.download_and_save(entry.path, local_path, token)
 
 # Upload a file
-sf.upload_file_to_soracom(
+sl.upload_file_to_soracom(
     file_path="./results/output.log",
     upload_path="logs/XXXXXXXXXXXXXXXX/output.log",
     token=token,
@@ -116,6 +109,17 @@ sf.upload_file_to_soracom(
 ---
 
 ## API reference
+
+### Constants
+
+| Name | Value | Description |
+|------|-------|--------------|
+| `API_BASE` | `"https://api.soracom.io/v1"` | Base URL for all API calls |
+| `NETRC_HOST` | `"api.soracom.io"` | `machine` name looked up in `.netrc` |
+| `NETRC_PATHS` | `(os.path.expanduser("~/.netrc"),)` | Default netrc search paths |
+| `LEVEL_INFO` / `LEVEL_WARN` / `LEVEL_ERROR` | `"INFO"` / `"WARN"` / `"ERROR"` | Log level constants used internally by `log_status()`; can also be passed directly when calling it |
+
+---
 
 ### `read_auth_keys(base_dir=None) -> AuthInfo`
 
@@ -147,7 +151,7 @@ class AuthInfo:
 Call `POST /auth` with the credentials in `auth` and return the session token dict issued by the server.
 
 ```python
-token = sf.authenticate(auth_info)
+token = sl.authenticate(auth_info)
 # → {"apiKey": "...", "token": "..."}
 ```
 
@@ -155,7 +159,7 @@ Raises `RuntimeError` if the request fails or the server returns a non-200 statu
 
 ---
 
-### `list_files_iterative(base_path, token, *, limit=None, page_size=100, start_time=None, end_time=None) -> list[FileEntry]`
+### `list_files_iterative(base_path, token, limit=None, page_size=100, start_time=None, end_time=None) -> list[FileEntry]`
 
 Iteratively traverse directories and list all files under `base_path` in Harvest Files.
 
@@ -172,7 +176,7 @@ Returns a list of `FileEntry` objects. Each entry has a `path` attribute (full r
 
 ---
 
-### `download_and_save(remote_path, local_path, token, *, overwrite=False, chunk_size=1048576) -> bool`
+### `download_and_save(remote_path, local_path, token, overwrite=False, chunk_size=1048576) -> bool`
 
 Download a single file from Harvest Files and save it to the local filesystem.
 
@@ -210,7 +214,7 @@ Authenticated DELETE. Returns the response object on success (status < 400), or 
 
 ---
 
-### `is_recent(last_modified_ms, within_seconds, *, now=None) -> bool`
+### `is_recent(last_modified_ms, within_seconds, now=None) -> bool`
 
 Return `True` if `last_modified_ms` (milliseconds since epoch, as returned by the Harvest Files API) falls within the past `within_seconds` seconds.
 
@@ -221,21 +225,20 @@ Return `True` if `last_modified_ms` (milliseconds since epoch, as returned by th
 | `now` | `datetime \| None` | Reference time (UTC). Defaults to `datetime.now(timezone.utc)` |
 
 ```python
-if sf.is_recent(entry["lastModifiedTime"], within_seconds=7 * 86_400):
+if sl.is_recent(entry["lastModifiedTime"], within_seconds=7 * 86_400):
     print("Modified within the last week")
 ```
 
 ---
 
-### `LEVEL_INFO` / `LEVEL_WARN` / `LEVEL_ERROR`
+### `resolve_entry_timestamp(entry: FileEntry, tz=timezone.utc) -> datetime | None`
 
-Log level constants used internally by `log_status()`. You can also pass these directly when calling `log_status()`.
+Resolve the best available timestamp for a `FileEntry`. Currently returns `entry.last_modified` converted to `tz`, or `None` if it is absent.
 
-```python
-LEVEL_INFO  = "INFO"
-LEVEL_WARN  = "WARN"
-LEVEL_ERROR = "ERROR"
-```
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `entry` | `FileEntry` | An entry returned by `list_files_iterative()` |
+| `tz` | `timezone` | Timezone for the returned datetime (default: UTC) |
 
 ---
 
@@ -245,12 +248,12 @@ LEVEL_ERROR = "ERROR"
 
 ```python
 import os
-import soracom_harvest_files as sf
+import soracomlib as sl
 
-auth_info = sf.read_auth_keys()
-token = sf.authenticate(auth_info)
+auth_info = sl.read_auth_keys()
+token = sl.authenticate(auth_info)
 
-files = sf.list_files_iterative("logs/XXXXXXXXXXXXXXXX/", token)
+files = sl.list_files_iterative("logs/XXXXXXXXXXXXXXXX/", token)
 save_dir = "./download/XXXXXXXXXXXXXXXX"
 os.makedirs(save_dir, exist_ok=True)
 
@@ -262,19 +265,19 @@ for entry in sorted(files, key=lambda e: e.path):
         break
 
     local_path = os.path.join(save_dir, os.path.basename(entry.path))
-    ok = sf.download_and_save(entry.path, local_path, token)
+    ok = sl.download_and_save(entry.path, local_path, token)
 
     if ok:
         downloaded_bytes += os.path.getsize(local_path)
         # Optionally delete from Harvest Files after download:
-        # sf.delete_with_auth(f"{sf.API_BASE}/files/private/{entry.path}", token)
+        # sl.delete_with_auth(f"{sl.API_BASE}/files/private/{entry.path}", token)
 ```
 
 ---
 
 ## Logging
 
-`soracom_harvest_files` uses Python's standard `logging` module under the logger name `soracom_harvest_files`.  
+The library uses Python's standard `logging` module under the logger name `soracomlib.soracom_harvest_files`.  
 By default a `NullHandler` is attached, so no output appears unless your application configures logging.  
 To integrate with your own logging config:
 
@@ -283,10 +286,10 @@ import logging
 
 # Show INFO and above from this library on stderr
 logging.basicConfig(level=logging.INFO)
-logging.getLogger("soracom_harvest_files").propagate = True
+logging.getLogger("soracomlib.soracom_harvest_files").propagate = True
 
 # Or suppress all output from this library
-logging.getLogger("soracom_harvest_files").setLevel(logging.CRITICAL)
+logging.getLogger("soracomlib.soracom_harvest_files").setLevel(logging.CRITICAL)
 ```
 
 ---
